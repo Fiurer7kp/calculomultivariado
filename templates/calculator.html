@@ -172,43 +172,86 @@
                         <label> x ∈ <input id="xmin" type="number" value="-5" style="width:70px"/> : <input id="xmax" type="number" value="5" style="width:70px"/></label>
                         <label> y ∈ <input id="ymin" type="number" value="-5" style="width:70px"/> : <input id="ymax" type="number" value="5" style="width:70px"/></label>
                     </div>
-                    <div>
-                        <label>Resolución 3D: <input id="res3d" type="number" value="40" min="10" max="150" style="width:70px"/></label>
+                    <div class="range-inputs" style="gap:12px">
+                        <label>Resolución 2D: <input id="res2d" type="number" value="120" min="40" max="400" style="width:80px"/></label>
+                        <label>Resolución 3D: <input id="res3d" type="number" value="40" min="10" max="150" style="width:80px"/></label>
                     </div>
                 </div>
 
-                <!-- Parámetros de análisis (sin prompt) -->
-                <div class="analysis-controls" style="margin-top:8px; display:grid; grid-template-columns: 1fr; gap:6px; background:#eef2f5; padding:8px; border-radius:6px;">
-                    <div>
-                        <b>Límite en (a,b):</b>
-                        a = <input id="limitAx" type="number" value="0" style="width:70px"/> ,
-                        b = <input id="limitBy" type="number" value="0" style="width:70px"/>
+                <!-- Parámetros de análisis (ordenados y con atajos) -->
+                <style>
+                  .analysis-controls{margin-top:8px; background:#eef2f5; padding:10px; border-radius:8px;}
+                  .analysis-grid{display:grid; grid-template-columns: repeat(2, 1fr); gap:10px;}
+                  .analysis-block{background:#fff; border:1px solid #dde1e6; border-radius:8px; padding:8px; box-shadow:0 2px 6px rgba(0,0,0,0.05);} 
+                  .analysis-block h5{margin-bottom:6px; color:#2c3e50; font-size:14px;}
+                  .analysis-row{display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
+                  .analysis-row label{font-size:13px; color:#333;}
+                </style>
+                <div class="analysis-controls">
+                  <div class="analysis-grid">
+                    <div class="analysis-block">
+                      <h5>Visualización</h5>
+                      <div class="analysis-row">
+                        <button class="function" onclick="drawContours2D()">Contornos 2D</button>
+                        <button class="function" onclick="drawHeatmap2D()">Heatmap 2D</button>
+                        <button class="function" onclick="centerCamera3D()">Centrar cámara 3D</button>
+                        <button class="function" onclick="exportGraphs()">Exportar PNG</button>
+                      </div>
+                      <div class="small">Contornos/heatmap usan f(x,y); exporta 2D/3D si existen.</div>
+                    </div>
+                    <div class="analysis-block">
+                      <h5>Límite en (a,b)</h5>
+                      <div class="analysis-row">
+                        <label>a <input id="limitAx" type="number" value="0" style="width:80px"/></label>
+                        <label>b <input id="limitBy" type="number" value="0" style="width:80px"/></label>
                         <button class="function" onclick="computeLimit2D()">Calcular</button>
+                      </div>
+                      <div class="small">Enter en a/b ejecuta el cálculo y marca el punto.</div>
                     </div>
-                    <div>
-                        <b>Derivadas/Gradiente en (x,y) (opcional):</b>
-                        x = <input id="derivX" type="number" placeholder="(opcional)" style="width:70px"/> ,
-                        y = <input id="derivY" type="number" placeholder="(opcional)" style="width:70px"/>
+                    <div class="analysis-block">
+                      <h5>Derivadas/Gradiente (x,y)</h5>
+                      <div class="analysis-row">
+                        <label>x <input id="derivX" type="number" placeholder="opcional" style="width:80px"/></label>
+                        <label>y <input id="derivY" type="number" placeholder="opcional" style="width:80px"/></label>
                         <button class="function" onclick="showDerivatives()">Derivar</button>
+                      </div>
+                      <div class="small">Enter en x/y ejecuta derivadas (si se indica punto).</div>
                     </div>
-                    <div>
-                        <b>Restricción g(x,y)=0 (Lagrange):</b>
-                        <input id="lagrangeG" type="text" value="x + y = 1" style="width:260px"/>
+                    <div class="analysis-block">
+                      <h5>Restricción g(x,y) = 0 (Lagrange)</h5>
+                      <div class="analysis-row">
+                        <input id="lagrangeG" type="text" value="x + y = 1" style="flex:1; min-width:220px"/>
                         <button class="function" onclick="lagrangeOptimize()">Resolver</button>
+                      </div>
+                      <div class="small">Enter en el campo ejecuta la optimización.</div>
                     </div>
-                    <div>
-                        <b>∬ Límites rectangulares:</b>
-                        x: [<input id="int2dxA" type="number" value="-1" style="width:70px"/>, <input id="int2dxB" type="number" value="1" style="width:70px"/>] ,
-                        y: [<input id="int2dyC" type="number" value="-1" style="width:70px"/>, <input id="int2dyD" type="number" value="1" style="width:70px"/>]
-                        <button class="function" onclick="integralDouble()">∬</button>
+                    <div class="analysis-block">
+                      <h5>Dominio y Rango</h5>
+                      <div class="analysis-row">
+                        <button class="function" onclick="analyzeDomainRange()">Calcular dominio/rango</button>
+                        <button class="function" onclick="drawDomainMask2D()">Graficar dominio (2D)</button>
+                      </div>
+                      <div class="small">Usa los rangos x/y de arriba para el muestreo.</div>
                     </div>
-                    <div>
-                        <b>∭ Límites rectangulares:</b>
-                        x: [<input id="int3dxA" type="number" value="-1" style="width:70px"/>, <input id="int3dxB" type="number" value="1" style="width:70px"/>] ,
-                        y: [<input id="int3dyC" type="number" value="-1" style="width:70px"/>, <input id="int3dyD" type="number" value="1" style="width:70px"/>] ,
-                        z: [<input id="int3dzE" type="number" value="-1" style="width:70px"/>, <input id="int3dzF" type="number" value="1" style="width:70px"/>]
-                        <button class="function" onclick="integralTriple()">∭</button>
+                    <div class="analysis-block">
+                      <h5>∬ Límites rectangulares</h5>
+                      <div class="analysis-row">
+                        <label>x [<input id="int2dxA" type="number" value="-1" style="width:70px"/>, <input id="int2dxB" type="number" value="1" style="width:70px"/>]</label>
+                        <label>y [<input id="int2dyC" type="number" value="-1" style="width:70px"/>, <input id="int2dyD" type="number" value="1" style="width:70px"/>]</label>
+                        <button class="function" onclick="integralDouble()">Calcular ∬</button>
+                      </div>
+                      <div class="small">Se dibuja el rectángulo en la gráfica 2D.</div>
                     </div>
+                    <div class="analysis-block">
+                      <h5>∭ Límites rectangulares</h5>
+                      <div class="analysis-row">
+                        <label>x [<input id="int3dxA" type="number" value="-1" style="width:70px"/>, <input id="int3dxB" type="number" value="1" style="width:70px"/>]</label>
+                        <label>y [<input id="int3dyC" type="number" value="-1" style="width:70px"/>, <input id="int3dyD" type="number" value="1" style="width:70px"/>]</label>
+                        <label>z [<input id="int3dzE" type="number" value="-1" style="width:70px"/>, <input id="int3dzF" type="number" value="1" style="width:70px"/>]</label>
+                        <button class="function" onclick="integralTriple()">Calcular ∭</button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <div class="session-buttons">
@@ -304,6 +347,19 @@
     document.addEventListener('DOMContentLoaded', () => {
         displayEl = document.getElementById('display');
         refreshDisplay();
+
+        // Atajos: Enter en campos ejecuta acción
+        const onEnter = (id, handler) => {
+            const el = document.getElementById(id); if (!el) return;
+            el.addEventListener('keydown', (ev)=>{ if(ev.key==='Enter'){ handler(); } });
+        };
+        onEnter('limitAx', ()=>computeLimit2D());
+        onEnter('limitBy', ()=>computeLimit2D());
+        onEnter('derivX', ()=>showDerivatives());
+        onEnter('derivY', ()=>showDerivatives());
+        onEnter('lagrangeG', ()=>lagrangeOptimize());
+        ['int2dxA','int2dxB','int2dyC','int2dyD'].forEach(id=>onEnter(id, ()=>integralDouble()));
+        ['int3dxA','int3dxB','int3dyC','int3dyD','int3dzE','int3dzF'].forEach(id=>onEnter(id, ()=>integralTriple()));
     });
 
     // Helper: mostrar en display
@@ -442,6 +498,22 @@
         document.getElementById('graph3d').innerHTML = '';
     };
 
+    // Asegurar ejes vacíos si no hay gráfica
+    function ensureGraph2D(){
+        const gd = document.getElementById('graph2d');
+        if (!gd || gd.data) return;
+        const xmin = parseFloat(document.getElementById('xmin').value) || -5;
+        const xmax = parseFloat(document.getElementById('xmax').value) || 5;
+        const ymin = parseFloat(document.getElementById('ymin').value) || -5;
+        const ymax = parseFloat(document.getElementById('ymax').value) || 5;
+        Plotly.newPlot('graph2d', [], {xaxis:{range:[xmin,xmax], title:'x'}, yaxis:{range:[ymin,ymax], title:'y'}, margin:{l:40,r:10,b:40,t:30}});
+    }
+    function ensureGraph3D(){
+        const gd = document.getElementById('graph3d');
+        if (!gd || gd.data) return;
+        Plotly.newPlot('graph3d', [], {scene:{xaxis:{title:'x'},yaxis:{title:'y'},zaxis:{title:'z'}, camera:{eye:{x:1.2,y:1.2,z:0.8}}}, margin:{l:40,r:40,b:40,t:40}});
+    }
+
 
     // Graficar 2D: Usa Plotly para crear una línea de 1D (x, f(x))
     window.plot2D = async function() {
@@ -484,14 +556,15 @@
                     let y = NaN; try { const r = eval(fn); if (isFinite(r)) y=r; } catch(_){}
                     ys.push(y);
                 }
-                data = [{x: xs, y: ys, mode:'lines', name:'y = f(x)'}];
+                data = [{x: xs, y: ys, mode:'lines', name:'y = f(x)', line:{width:3, color:'#2c3e50'}}];
             }
 
             const layout = {
                 title: `f(x) = ${expr}`,
-                xaxis: { title: 'x', range: [xmin, xmax] },
-                yaxis: { title: 'y', range: [parseFloat(document.getElementById('ymin').value) || -5, parseFloat(document.getElementById('ymax').value) || 5] },
+                xaxis: { title: 'x', range: [xmin, xmax], showgrid:true, zeroline:true, gridcolor:'#e1e4e8' },
+                yaxis: { title: 'y', range: [parseFloat(document.getElementById('ymin').value) || -5, parseFloat(document.getElementById('ymax').value) || 5], showgrid:true, zeroline:true, gridcolor:'#e1e4e8' },
                 margin: { l: 40, r: 10, b: 40, t: 30 },
+                paper_bgcolor: 'white', plot_bgcolor: '#fafafa',
                 responsive: true
             };
 
@@ -542,13 +615,19 @@
 
             const data = [{ 
                 z: Z, x: xs, y: ys, type: 'surface', connectgaps: false,
-                name: `z = ${expr}`
+                name: `z = ${expr}`, colorscale: 'Turbo', showscale: true, opacity: 0.95,
+                lighting: {ambient: 0.6, diffuse: 0.8, specular: 0.3, roughness: 0.9, fresnel: 0.2},
+                lightposition: {x: 100, y: 200, z: 300},
+                contours: {z: {show: true, usecolormap: true, highlight: true, project: {x:true, y:true}}}
             }];
 
             const layout = {
                 title: `f(x,y) = ${expr}`,
                 autosize: true, margin: {l: 40, r: 40, b: 40, t: 40},
-                scene: { xaxis: {title: 'x'}, yaxis: {title: 'y'}, zaxis: {title: 'z'} }
+                scene: { xaxis: {title: 'x'}, yaxis: {title: 'y'}, zaxis: {title: 'z'},
+                         camera: {eye: {x:1.2, y:1.2, z:0.8}} },
+                paper_bgcolor: 'white',
+                plot_bgcolor: '#fafafa'
             };
 
             Plotly.newPlot('graph3d', data, layout, {responsive:true});
@@ -557,6 +636,108 @@
             alert('Error al graficar 3D: ' + e.message);
         }
     };
+
+    // Dibuja el punto (a,b) con su z en la gráfica 3D
+    function addLimitMarker3D(ax, by){
+        try{
+            ensureGraph3D();
+            const raw = currentExpression;
+            let expr = raw.includes('=') ? raw.split('=')[1].trim() : raw;
+            let fn = normalize(expr).replace(/x/g, `(${ax})`).replace(/y/g, `(${by})`);
+            let z = 0; try{ const r = eval(fn); if (typeof r==='number' && isFinite(r)) z = r; }catch(_){ /* keep 0 */ }
+            const trace = {type:'scatter3d', mode:'markers', x:[ax], y:[by], z:[z], marker:{size:5, color:'red'}, name:`P(${ax},${by})`};
+            Plotly.addTraces('graph3d', [trace]);
+        }catch(e){ /* silencioso */ }
+    }
+
+    // Dibuja el rectángulo de integración en gráfica 2D (proyección XY)
+    function drawIntegrationRegion2D(a,b,c,d){
+        try{
+            ensureGraph2D();
+            const xs = [a,b,b,a,a];
+            const ys = [c,c,d,d,c];
+            const trace = {type:'scatter', x:xs, y:ys, mode:'lines', fill:'toself', name:`Región [${a},${b}]x[${c},${d}]`, line:{color:'#e67e22'}};
+            Plotly.addTraces('graph2d', [trace]);
+        }catch(e){ /* silencioso */ }
+    }
+
+    // Contornos 2D de z=f(x,y)
+    function drawContours2D(){
+        const raw = currentExpression; if (!raw) return alert('Ingrese f(x,y)');
+        ensureGraph2D();
+        try{
+            const xmin = parseFloat(document.getElementById('xmin').value) || -5;
+            const xmax = parseFloat(document.getElementById('xmax').value) || 5;
+            const ymin = parseFloat(document.getElementById('ymin').value) || -5;
+            const ymax = parseFloat(document.getElementById('ymax').value) || 5;
+            const res = Math.max(40, Math.min(400, parseInt(document.getElementById('res2d').value) || 120));
+            const xs = linspace(xmin, xmax, res);
+            const ys = linspace(ymin, ymax, res);
+            const Z = [];
+            let expr = raw.includes('=') ? raw.split('=')[1].trim() : raw;
+            for(let j=0;j<ys.length;j++){
+                const y = ys[j];
+                const row = [];
+                for(let i=0;i<xs.length;i++){
+                    const x = xs[i];
+                    let fn = normalize(expr).replace(/x/g, `(${x})`).replace(/y/g, `(${y})`);
+                    let v = null; try{ const r = eval(fn); if (typeof r==='number' && isFinite(r)) v=r; }
+                    catch(_){ v=null; }
+                    row.push(v);
+                }
+                Z.push(row);
+            }
+            const trace = {type:'contour', x:xs, y:ys, z:Z, colorscale:'Viridis', contours:{showlabels:true}, line:{smoothing:0.7}, name:'Contornos z=f(x,y)'};
+            Plotly.addTraces('graph2d', [trace]);
+        }catch(e){ alert('Error creando contornos: '+e.message); }
+    }
+
+    // Heatmap 2D de z=f(x,y)
+    function drawHeatmap2D(){
+        const raw = currentExpression; if (!raw) return alert('Ingrese f(x,y)');
+        ensureGraph2D();
+        try{
+            const xmin = parseFloat(document.getElementById('xmin').value) || -5;
+            const xmax = parseFloat(document.getElementById('xmax').value) || 5;
+            const ymin = parseFloat(document.getElementById('ymin').value) || -5;
+            const ymax = parseFloat(document.getElementById('ymax').value) || 5;
+            const res = Math.max(40, Math.min(400, parseInt(document.getElementById('res2d').value) || 120));
+            const xs = linspace(xmin, xmax, res);
+            const ys = linspace(ymin, ymax, res);
+            const Z = [];
+            let expr = raw.includes('=') ? raw.split('=')[1].trim() : raw;
+            for(let j=0;j<ys.length;j++){
+                const y = ys[j];
+                const row = [];
+                for(let i=0;i<xs.length;i++){
+                    const x = xs[i];
+                    let fn = normalize(expr).replace(/x/g, `(${x})`).replace(/y/g, `(${y})`);
+                    let v = null; try{ const r = eval(fn); if (typeof r==='number' && isFinite(r)) v=r; }
+                    catch(_){ v=null; }
+                    row.push(v);
+                }
+                Z.push(row);
+            }
+            const trace = {type:'heatmap', x:xs, y:ys, z:Z, colorscale:'RdBu', name:'Heatmap z=f(x,y)'};
+            Plotly.addTraces('graph2d', [trace]);
+        }catch(e){ alert('Error creando heatmap: '+e.message); }
+    }
+
+    function centerCamera3D(){
+        try{ Plotly.relayout('graph3d', {scene:{camera:{eye:{x:1.2,y:1.2,z:0.8}, center:{x:0,y:0,z:0}}}}); }
+        catch(_){ /* silencioso */ }
+    }
+
+    function exportGraphs(){
+        try{
+            const g2 = document.getElementById('graph2d');
+            if (g2 && g2.data && g2.data.length>0) Plotly.downloadImage(g2, {format:'png', filename:'grafica_2d'});
+        }catch(_){}
+        try{
+            const g3 = document.getElementById('graph3d');
+            if (g3 && g3.data && g3.data.length>0) Plotly.downloadImage(g3, {format:'png', filename:'grafica_3d'});
+        }catch(_){}
+    }
 
     function linspace(a, b, n) {
         const arr = [];
@@ -851,6 +1032,33 @@ LIMITACIÓN:
         }catch(e){ updateAnalysis('Error: '+e.message); }
     }
 
+    // Visualiza el dominio como una máscara de puntos válidos (proyección XY)
+    window.drawDomainMask2D = function(){
+        const raw = currentExpression; if (!raw) return alert('Ingrese f(x,y)');
+        ensureGraph2D();
+        try{
+            const xmin = parseFloat(document.getElementById('xmin').value) || -5;
+            const xmax = parseFloat(document.getElementById('xmax').value) || 5;
+            const ymin = parseFloat(document.getElementById('ymin').value) || -5;
+            const ymax = parseFloat(document.getElementById('ymax').value) || 5;
+            const res = 50;
+            const xs = linspace(xmin, xmax, res);
+            const ys = linspace(ymin, ymax, res);
+            const X=[]; const Y=[];
+            let expr = raw.includes('=') ? raw.split('=')[1].trim() : raw;
+            for (let j=0;j<ys.length;j++){
+                const y = ys[j];
+                for(let i=0;i<xs.length;i++){
+                    const x = xs[i];
+                    let fn = normalize(expr).replace(/x/g, `(${x})`).replace(/y/g, `(${y})`);
+                    try{ const r = eval(fn); if (typeof r==='number' && isFinite(r)){ X.push(x); Y.push(y); } }catch(_){ /* fuera de dominio */ }
+                }
+            }
+            const trace = {type:'scatter', x:X, y:Y, mode:'markers', marker:{size:3, color:'#16a085', opacity:0.7}, name:'Dominio (válidos)'};
+            Plotly.addTraces('graph2d', [trace]);
+        }catch(e){ alert('Error graficando dominio 2D: '+e.message); }
+    }
+
     // ---- Nuevo: Límite 2D ----
     window.computeLimit2D = async function(){
         const raw = currentExpression; if (!raw) return alert('Ingrese f(x,y)');
@@ -863,6 +1071,8 @@ LIMITACIÓN:
             const val = data.limit_estimate==null ? 'No estimado' : data.limit_estimate;
             updateAnalysis(`<div><b>Lim f(x,y)→(${ax},${by}):</b> ${val}</div>
                 <div>Convergencia (4 rutas): ${data.converges ? 'Sí' : 'No'}</div>`);
+            // Visualizar punto en 3D
+            addLimitMarker3D(ax, by);
         }catch(e){ updateAnalysis('Error: '+e.message); }
     }
 
@@ -882,6 +1092,31 @@ LIMITACIÓN:
             let html = `<div><b>∂f/∂x:</b> ${data.fx_latex}</div><div><b>∂f/∂y:</b> ${data.fy_latex}</div><div><b>Hessiano:</b> ${data.hessian_latex}</div>`;
             if (data.grad_at_point) html += `<div><b>∇f(${point?point.x:'a'},${point?point.y:'b'}):</b> (${data.grad_at_point[0]}, ${data.grad_at_point[1]})</div>`;
             updateAnalysis(html);
+
+            // Visualización del gradiente como flecha en 3D (si hay punto)
+            if (point && data.grad_at_point){
+                const gx = data.grad_at_point[0];
+                const gy = data.grad_at_point[1];
+                // calcular z en el punto
+                let expr = raw.includes('=') ? raw.split('=')[1].trim() : raw;
+                let z0 = 0; try{
+                    const fn = normalize(expr).replace(/x/g, `(${point.x})`).replace(/y/g, `(${point.y})`);
+                    const r = eval(fn); if (typeof r==='number' && isFinite(r)) z0 = r;
+                }catch(_){ /* leave 0 */ }
+                const scale = 0.4; // escala visual
+                const x2 = point.x + scale*gx;
+                const y2 = point.y + scale*gy;
+                ensureGraph3D();
+                const arrow = {
+                    type: 'scatter3d', mode: 'lines+markers',
+                    x: [point.x, x2], y: [point.y, y2], z: [z0, z0],
+                    line: {color: '#c0392b', width: 6},
+                    marker: {size: 3, color: '#c0392b'},
+                    name: '∇f (dirección máxima subida)'
+                };
+                const pmark = {type:'scatter3d', mode:'markers', x:[point.x], y:[point.y], z:[z0], marker:{size:5, color:'#2980b9'}, name:`P(${point.x},${point.y})`};
+                Plotly.addTraces('graph3d', [pmark, arrow]);
+            }
         }catch(e){ updateAnalysis('Error: '+e.message); }
     }
 
@@ -909,6 +1144,8 @@ LIMITACIÓN:
             const resp = await fetch('/integral2d', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({expression: raw, bounds:{x:[a,b], y:[c,d]}})});
             const data = await resp.json(); if(!data.success) throw new Error(data.error || 'Error integral 2D');
             updateAnalysis(`<div><b>∬ f(x,y) dx dy:</b> ${data.result}</div><div>Simbolico:</div><div>${data.latex}</div>`);
+            // Dibujar región en 2D
+            drawIntegrationRegion2D(a,b,c,d);
         }catch(e){ updateAnalysis('Error: '+e.message); }
     }
 
