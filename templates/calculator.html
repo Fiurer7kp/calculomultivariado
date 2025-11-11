@@ -17,7 +17,7 @@
         .graph-panel { background:#ecf0f1; padding:10px; border-radius:5px; }
         #graph2d { width:100%; height:300px; background:white; border-radius:4px; }
         #graph3d { width:100%; height:300px; background:white; border-radius:4px; margin-top:10px; }
-        .calc-panel { background:#bdc3c7; padding:10px; border-radius:5px; }
+        .calc-panel { background:#bdc3c7; padding:10px; border-radius:5px; max-height: 680px; overflow-y: auto; }
         .display { background:#1a1a1a; color:#00ff00; font-size:16px; padding:10px; border-radius:5px; text-align:right; min-height:44px; font-family:'Courier New', monospace; overflow-x:auto; }
         .small { font-size:12px; color:#222; margin-bottom:6px; text-align:center; }
         .buttons { display:grid; grid-template-columns: repeat(5, 1fr); gap:6px; margin-top:8px; }
@@ -36,6 +36,18 @@
         .controls { margin-top:8px; display:flex; gap:8px; align-items:center; justify-content:space-between; flex-wrap: wrap;}
         .range-inputs { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
         input[type="text"], input[type="number"], select { padding:6px; border-radius:6px; border:1px solid #999; }
+        /* Panel de análisis */
+        .analysis-panel { background:#ffffff; border-radius:6px; padding:10px; margin-top:10px; min-height:90px; box-shadow:0 0 6px rgba(0,0,0,0.08); }
+        .analysis-title { font-weight:bold; margin-bottom:6px; color:#2c3e50; }
+        /* Modal de ejemplos */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: #fff; border-radius: 8px; width: 880px; max-width: 95vw; max-height: 85vh; overflow: auto; box-shadow: 0 12px 28px rgba(0,0,0,0.3); }
+        .modal-header { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:#34495e; color:#fff; border-radius:8px 8px 0 0; }
+        .modal-body { padding: 12px 16px; }
+        .examples-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .examples-card { background:#f8f9fa; border:1px solid #e1e4e8; border-radius:8px; padding:10px; }
+        .examples-card h5 { margin-bottom:8px; color:#2c3e50; }
+        .examples-card .buttons { grid-template-columns: repeat(2, 1fr); }
     </style>
 </head>
 <body>
@@ -52,6 +64,10 @@
 
                 <h4 style="margin-top:10px">Gráfica 3D (z = f(x,y))</h4>
                 <div id="graph3d"></div>
+                <div id="analysisPanel" class="analysis-panel">
+                    <div class="analysis-title">Resultados y análisis</div>
+                    <div id="analysisContent">Usa "Optimizar f(x,y)" para ver gradiente y puntos críticos.</div>
+                </div>
             </div>
 
             <div class="calc-panel">
@@ -116,6 +132,41 @@
                     <button class="function" onclick="helpDialog()">Ayuda</button>
                 </div>
 
+                <!-- Herramientas avanzadas de Cálculo Multivariado -->
+                <div class="buttons" style="margin-top:12px">
+                    <button class="function" onclick="insertFx('x')">F(x)</button>
+                    <button class="function" onclick="insertFx('xy')">F(x,y)</button>
+                    <button class="function" onclick="plotLine2D()">Recta 2D</button>
+                    <button class="function" onclick="plotLine3D()">Recta 3D</button>
+                    <button class="function" onclick="plotPlane3D()">Plano 3D</button>
+                    <button class="function" onclick="plotImplicit3D()">Superficie implícita</button>
+                    <button class="equals" onclick="optimizeFn()">Optimizar f(x,y)</button>
+                    <button class="function" onclick="openExamples()">Ejemplos</button>
+                </div>
+
+                <div class="buttons" style="margin-top:6px">
+                    <button class="function" onclick="loadQuadric('sphere')">Esfera</button>
+                    <button class="function" onclick="loadQuadric('ellipsoid')">Elipsoide</button>
+                    <button class="function" onclick="loadQuadric('paraboloid')">Paraboloide</button>
+                    <button class="function" onclick="loadQuadric('hyperboloid1')">Hiperboloide 1 hoja</button>
+                    <button class="function" onclick="loadQuadric('hyperboloid2')">Hiperboloide 2 hojas</button>
+                </div>
+
+                <div class="buttons" style="margin-top:6px">
+                    <button class="function" onclick="analyzeDomainRange()">Dominio/Rango</button>
+                    <button class="function" onclick="computeLimit2D()">Límite en (a,b)</button>
+                    <button class="function" onclick="showDerivatives()">Derivadas/Gradiente</button>
+                    <button class="function" onclick="lagrangeOptimize()">Optimización con Lagrange</button>
+                    <button class="function" onclick="integralDouble()">Integral doble</button>
+                    <button class="function" onclick="integralTriple()">Integral triple</button>
+                </div>
+
+                <!-- Atajos con símbolos ∬ y ∭ -->
+                <div class="buttons" style="margin-top:6px">
+                    <button class="function" title="Integral doble" onclick="integralDouble()">∬</button>
+                    <button class="function" title="Integral triple" onclick="integralTriple()">∭</button>
+                </div>
+
                 <div class="controls">
                     <div class="range-inputs">
                         <label> x ∈ <input id="xmin" type="number" value="-5" style="width:70px"/> : <input id="xmax" type="number" value="5" style="width:70px"/></label>
@@ -123,6 +174,40 @@
                     </div>
                     <div>
                         <label>Resolución 3D: <input id="res3d" type="number" value="40" min="10" max="150" style="width:70px"/></label>
+                    </div>
+                </div>
+
+                <!-- Parámetros de análisis (sin prompt) -->
+                <div class="analysis-controls" style="margin-top:8px; display:grid; grid-template-columns: 1fr; gap:6px; background:#eef2f5; padding:8px; border-radius:6px;">
+                    <div>
+                        <b>Límite en (a,b):</b>
+                        a = <input id="limitAx" type="number" value="0" style="width:70px"/> ,
+                        b = <input id="limitBy" type="number" value="0" style="width:70px"/>
+                        <button class="function" onclick="computeLimit2D()">Calcular</button>
+                    </div>
+                    <div>
+                        <b>Derivadas/Gradiente en (x,y) (opcional):</b>
+                        x = <input id="derivX" type="number" placeholder="(opcional)" style="width:70px"/> ,
+                        y = <input id="derivY" type="number" placeholder="(opcional)" style="width:70px"/>
+                        <button class="function" onclick="showDerivatives()">Derivar</button>
+                    </div>
+                    <div>
+                        <b>Restricción g(x,y)=0 (Lagrange):</b>
+                        <input id="lagrangeG" type="text" value="x + y = 1" style="width:260px"/>
+                        <button class="function" onclick="lagrangeOptimize()">Resolver</button>
+                    </div>
+                    <div>
+                        <b>∬ Límites rectangulares:</b>
+                        x: [<input id="int2dxA" type="number" value="-1" style="width:70px"/>, <input id="int2dxB" type="number" value="1" style="width:70px"/>] ,
+                        y: [<input id="int2dyC" type="number" value="-1" style="width:70px"/>, <input id="int2dyD" type="number" value="1" style="width:70px"/>]
+                        <button class="function" onclick="integralDouble()">∬</button>
+                    </div>
+                    <div>
+                        <b>∭ Límites rectangulares:</b>
+                        x: [<input id="int3dxA" type="number" value="-1" style="width:70px"/>, <input id="int3dxB" type="number" value="1" style="width:70px"/>] ,
+                        y: [<input id="int3dyC" type="number" value="-1" style="width:70px"/>, <input id="int3dyD" type="number" value="1" style="width:70px"/>] ,
+                        z: [<input id="int3dzE" type="number" value="-1" style="width:70px"/>, <input id="int3dzF" type="number" value="1" style="width:70px"/>]
+                        <button class="function" onclick="integralTriple()">∭</button>
                     </div>
                 </div>
 
@@ -138,6 +223,70 @@
         </div>
     </div>
 
+<!-- Modal de Ejemplos -->
+<div id="examplesModal" class="modal" onclick="closeExamples(event)">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div>Catálogo de ejemplos (click y listo)</div>
+      <button class="clear" onclick="closeExamples()">Cerrar ×</button>
+    </div>
+    <div class="modal-body">
+      <div class="examples-grid">
+        <div class="examples-card">
+          <h5>Visualización z = f(x,y)</h5>
+          <div class="buttons">
+            <button class="function" onclick="examplePlot3D('x**2 + 2*y**2')">x^2 + 2*y^2</button>
+            <button class="function" onclick="examplePlot3D('sin(x) * cos(y)')">sin(x)*cos(y)</button>
+            <button class="function" onclick="examplePlot3D('sqrt(25 - x**2 - y**2)')">sqrt(25 - x^2 - y^2)</button>
+          </div>
+        </div>
+        <div class="examples-card">
+          <h5>Dominio y Rango</h5>
+          <div class="buttons">
+            <button class="function" onclick="exampleDomainRange('sqrt(9 - x**2 - y**2)')">sqrt(9 - x^2 - y^2)</button>
+            <button class="function" onclick="exampleDomainRange('log(x + y)')">log(x + y)</button>
+            <button class="function" onclick="exampleDomainRange('1 / (x - y)')">1/(x - y)</button>
+          </div>
+        </div>
+        <div class="examples-card">
+          <h5>Límite en (0,0)</h5>
+          <div class="buttons">
+            <button class="function" onclick="exampleLimit('(x**2*y) / (x**2 + y**2)',0,0)">(x^2*y)/(x^2+y^2)</button>
+            <button class="function" onclick="exampleLimit('(x*y) / (x**2 + y**2)',0,0)">(x*y)/(x^2+y^2)</button>
+            <button class="function" onclick="exampleLimit('sin(x*y)',0,0)">sin(x*y)</button>
+          </div>
+        </div>
+        <div class="examples-card">
+          <h5>Derivadas y Gradiente</h5>
+          <div class="buttons">
+            <button class="function" onclick="exampleDeriv('x**2 + y**2',1,-2)">x^2 + y^2 @ (1,-2)</button>
+            <button class="function" onclick="exampleDeriv('x*y + x**2',0,3)">x*y + x^2 @ (0,3)</button>
+            <button class="function" onclick="exampleDeriv('exp(x) * sin(y)',0,Math.PI/2)">e^x sin(y) @ (0,π/2)</button>
+          </div>
+        </div>
+        <div class="examples-card">
+          <h5>Lagrange (g=0)</h5>
+          <div class="buttons">
+            <button class="function" onclick="exampleLagrange('x**2 + y**2','x + y = 1')">x^2 + y^2; x+y=1</button>
+            <button class="function" onclick="exampleLagrange('x**2 + 4*y**2','x - y = 0')">x^2 + 4y^2; x−y=0</button>
+            <button class="function" onclick="exampleLagrange('-x - y','x**2 + y**2 = 1')">−x − y; x^2+y^2=1</button>
+          </div>
+        </div>
+        <div class="examples-card">
+          <h5>Integrales</h5>
+          <div class="buttons">
+            <button class="function" onclick="exampleInt2D('x + y',[0,1],[0,1])">∬(x+y) [0,1]x[0,1]</button>
+            <button class="function" onclick="exampleInt2D('x**2 + y**2',[-1,1],[0,2])">∬(x^2+y^2) [-1,1]x[0,2]</button>
+            <button class="function" onclick="exampleInt2D('sin(x) * cos(y)',[0,Math.PI],[0,Math.PI/2])">∬ sin(x)cos(y)</button>
+            <button class="function" onclick="exampleInt3D('1',[0,1],[0,1],[0,1])">∭(1) cubo unidad</button>
+            <button class="function" onclick="exampleInt3D('x + y + z',[0,1],[0,1],[0,1])">∭(x+y+z) [0,1]^3</button>
+            <button class="function" onclick="exampleInt3D('x**2 + y**2',[0,1],[0,1],[0,2])">∭(x^2+y^2) z∈[0,2]</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 <script>
 /*
   Calculadora Multivariada (Revisión 3):
@@ -169,6 +318,14 @@
         let text = expr.replace(/×/g, '*').replace(/÷/g, '/');
         // Reemplazar ^ por ** (potencia en JS)
         text = text.replace(/\^/g, '**'); 
+        // Eliminar prefijos tipo f(x)= o f(x,y)= si existen
+        text = text.replace(/^\s*f\s*\(\s*x\s*\)\s*=\s*/i, '')
+                   .replace(/^\s*f\s*\(\s*x\s*,\s*y\s*\)\s*=\s*/i, '')
+                   .trim();
+        // Mapear funciones a Math.
+        text = text.replace(/\b(sin|cos|tan|log|sqrt|exp)\s*\(/g, (m, fn) => `Math.${fn}(`);
+        // Mapear constantes pi y e si se escriben como texto
+        text = text.replace(/\bpi\b/gi, 'Math.PI').replace(/\bE\b/g, 'Math.E');
         // Reemplazar ans por lastResult
         if (lastResult !== null) {
             text = text.replace(/ans/gi, lastResult);
@@ -257,43 +414,23 @@
     };
 
     // Evaluar expresión (Solo numérica)
-    window.calculate = function() {
+    window.calculate = async function() {
         const raw = currentExpression;
         if (!raw || raw.trim() === '0') return;
-
         try {
-            let expr = normalize(raw);
-            
-            // Si es una asignación simple
-            if (raw.includes('=') && !raw.includes('==')) {
-                const [left, right] = raw.split('=').map(s => s.trim());
-                if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(left)) {
-                    // Si es una asignación, solo se evalúa la parte derecha y se guarda en scope
-                    const value = eval(normalize(right));
-                    if (typeof value === 'number' && isFinite(value)) {
-                        scope[left] = value;
-                        lastResult = value;
-                        currentExpression = String(value);
-                        refreshDisplay();
-                        return;
-                    } else {
-                         throw new Error('Resultado no numérico');
-                    }
-                }
-            }
-
-            // Evaluación normal
-            const result = eval(expr);
-            
-            if (typeof result === 'number' && isFinite(result)) {
-                lastResult = result;
-                currentExpression = String(result);
+            const resp = await fetch('/calculate', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({expression: raw})
+            });
+            const data = await resp.json();
+            if (data.success) {
+                lastResult = data.result;
+                currentExpression = String(data.result);
             } else {
-                throw new Error('Resultado no numérico o inválido');
+                throw new Error(data.error || 'Error en cálculo');
             }
-
         } catch (err) {
-            console.error("Error de evaluación:", err);
+            console.error('Error de evaluación:', err);
             currentExpression = 'Error: Sintaxis/Numérico';
         }
         refreshDisplay();
@@ -307,40 +444,48 @@
 
 
     // Graficar 2D: Usa Plotly para crear una línea de 1D (x, f(x))
-    window.plot2D = function() {
+    window.plot2D = async function() {
         const raw = currentExpression;
-        if (!raw) return alert('Ingrese una expresión en x (ej: x**2)');
-        let expr = raw.includes('=') ? raw.split('=')[1].trim() : raw;
-        
+        if (!raw) return alert('Ingrese una función o ecuación en x,y (ej: y=x**2 o x+y=1)');
+        let expr = raw;
         try {
             const xmin = parseFloat(document.getElementById('xmin').value) || -5;
             const xmax = parseFloat(document.getElementById('xmax').value) || 5;
             const res = 200; // Resolución para 2D
-
             const xs = linspace(xmin, xmax, res);
-            const ys = [];
+            let data = [];
 
-            for (let i = 0; i < xs.length; i++) {
-                const x = xs[i];
-                let fn = normalize(expr); // Reemplazar ans, variables
-                fn = fn.replace(/x/g, `(${x})`); // Insertar valor de x
-                
-                let y = NaN;
-                try {
-                    const result = eval(fn);
-                    if (isFinite(result)) y = result;
-                } catch (e) {
-                    /* Mantener NaN */
+            // Si es una ecuación con x,y, resolvemos para y en backend
+            if (/=/.test(expr) && /x/.test(expr) && /y/.test(expr)) {
+                const resp = await fetch('/solve_for_y', {
+                    method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({equation: expr})
+                });
+                const json = await resp.json();
+                if (!json.success) throw new Error(json.error || 'No se pudo resolver para y');
+                const yExprs = json.y_expressions || [];
+                if (yExprs.length === 0) throw new Error('No se obtuvieron formas y(x)');
+                for (const ystr of yExprs) {
+                    const ys = [];
+                    for (let i=0;i<xs.length;i++) {
+                        const x = xs[i];
+                        let fn = normalize(ystr).replace(/x/g, `(${x})`);
+                        let y = NaN; try { const r = eval(fn); if (isFinite(r)) y=r; } catch(_){}
+                        ys.push(y);
+                    }
+                    data.push({x: xs, y: ys, mode:'lines', name: `y=${ystr}`});
                 }
-                ys.push(y);
+            } else {
+                // Caso función en x (y = f(x))
+                let rawExpr = expr.includes('=') ? expr.split('=')[1].trim() : expr;
+                const ys = [];
+                for (let i=0;i<xs.length;i++){
+                    const x = xs[i];
+                    let fn = normalize(rawExpr).replace(/x/g, `(${x})`);
+                    let y = NaN; try { const r = eval(fn); if (isFinite(r)) y=r; } catch(_){}
+                    ys.push(y);
+                }
+                data = [{x: xs, y: ys, mode:'lines', name:'y = f(x)'}];
             }
-
-            const data = [{
-                x: xs,
-                y: ys,
-                mode: 'lines',
-                name: 'y = f(x)'
-            }];
 
             const layout = {
                 title: `f(x) = ${expr}`,
@@ -389,13 +534,14 @@
                         const result = eval(fn);
                         if (typeof result === 'number' && isFinite(result)) v = result;
                     } catch (errEval) { /* Mantener NaN */ }
-                    row.push(v);
+                    // Plotly maneja mejor null que NaN en WebGL
+                    row.push((typeof v === 'number' && isFinite(v)) ? v : null);
                 }
                 Z.push(row);
             }
 
             const data = [{ 
-                z: Z, x: xs, y: ys, type: 'surface',
+                z: Z, x: xs, y: ys, type: 'surface', connectgaps: false,
                 name: `z = ${expr}`
             }];
 
@@ -420,6 +566,199 @@
         return arr;
     }
 
+    // Insertar prefijos F(x) y F(x,y)
+    window.insertFx = function(type){
+        if (type==='x') {
+            currentExpression = 'f(x) = ' + (currentExpression==='0' ? '' : currentExpression);
+        } else {
+            currentExpression = 'f(x,y) = ' + (currentExpression==='0' ? '' : currentExpression);
+        }
+        refreshDisplay();
+    }
+
+    // ---------- Herramientas avanzadas ----------
+    function updateAnalysis(html) {
+        const el = document.getElementById('analysisContent');
+        if (el) el.innerHTML = html;
+    }
+
+    // Recta 2D por dos puntos
+    window.plotLine2D = function() {
+        try {
+            const p1 = prompt('Punto 1 (x,y):', '0,0');
+            const p2 = prompt('Punto 2 (x,y):', '1,1');
+            if (!p1 || !p2) return;
+            const [x1,y1] = p1.split(',').map(Number);
+            const [x2,y2] = p2.split(',').map(Number);
+            if (![x1,y1,x2,y2].every(v => isFinite(v))) throw new Error('Formato inválido');
+
+            const xmin = parseFloat(document.getElementById('xmin').value) || -5;
+            const xmax = parseFloat(document.getElementById('xmax').value) || 5;
+            const xs = linspace(xmin, xmax, 200);
+            const m = (y2 - y1) / (x2 - x1);
+            const b = y1 - m * x1;
+            const ys = xs.map(x => m*x + b);
+
+            const data = [{x: xs, y: ys, mode: 'lines', name: `Recta por (${x1},${y1}) y (${x2},${y2})`}];
+            const layout = {title: 'Recta 2D', xaxis: {title:'x'}, yaxis: {title:'y'}};
+            Plotly.newPlot('graph2d', data, layout);
+        } catch(e){ alert('Error creando recta 2D: '+e.message); }
+    }
+
+    // Recta 3D por dos puntos
+    window.plotLine3D = function() {
+        try {
+            const p1 = prompt('Punto 1 (x,y,z):', '0,0,0');
+            const p2 = prompt('Punto 2 (x,y,z):', '1,1,1');
+            if (!p1 || !p2) return;
+            const [x1,y1,z1] = p1.split(',').map(Number);
+            const [x2,y2,z2] = p2.split(',').map(Number);
+            if (![x1,y1,z1,x2,y2,z2].every(v => isFinite(v))) throw new Error('Formato inválido');
+
+            const ts = linspace(0, 1, 100);
+            const xs = ts.map(t => x1 + t*(x2 - x1));
+            const ys = ts.map(t => y1 + t*(y2 - y1));
+            const zs = ts.map(t => z1 + t*(z2 - z1));
+
+            const data = [{
+                type: 'scatter3d', mode: 'lines', x: xs, y: ys, z: zs,
+                name: 'Recta 3D'
+            }];
+            const layout = {title: 'Recta 3D', scene: {xaxis:{title:'x'}, yaxis:{title:'y'}, zaxis:{title:'z'}}};
+            Plotly.newPlot('graph3d', data, layout);
+        } catch(e){ alert('Error creando recta 3D: '+e.message); }
+    }
+
+    // Plano 3D ax+by+cz=d
+    window.plotPlane3D = function() {
+        try {
+            const coeffs = prompt('Coeficientes del plano (a,b,c,d) en ax+by+cz=d:', '1,0,0,0');
+            if (!coeffs) return;
+            const [a,b,c,d] = coeffs.split(',').map(Number);
+            if (![a,b,c,d].every(v => isFinite(v))) throw new Error('Formato inválido');
+
+            const xmin = parseFloat(document.getElementById('xmin').value) || -5;
+            const xmax = parseFloat(document.getElementById('xmax').value) || 5;
+            const ymin = parseFloat(document.getElementById('ymin').value) || -5;
+            const ymax = parseFloat(document.getElementById('ymax').value) || 5;
+            const xs = linspace(xmin, xmax, 40);
+            const ys = linspace(ymin, ymax, 40);
+            const Z = [];
+
+            const solveZ = Math.abs(c) > 1e-12;
+            const solveY = !solveZ && Math.abs(b) > 1e-12;
+            const solveX = !solveZ && !solveY && Math.abs(a) > 1e-12;
+
+            for (let j=0;j<ys.length;j++){
+                const y = ys[j];
+                const row = [];
+                for (let i=0;i<xs.length;i++){
+                    const x = xs[i];
+                    let z;
+                    if (solveZ) z = (d - a*x - b*y)/c;
+                    else if (solveY) { z = 0; /* corte z=0 */ }
+                    else if (solveX) { z = 0; /* corte z=0 */ }
+                    else z = 0;
+                    row.push(z);
+                }
+                Z.push(row);
+            }
+
+            const data = [{type:'surface', x: xs, y: ys, z: Z, name:'Plano'}];
+            const layout = {title: `Plano: ${a}x+${b}y+${c}z=${d}`, scene:{xaxis:{title:'x'}, yaxis:{title:'y'}, zaxis:{title:'z'}}};
+            Plotly.newPlot('graph3d', data, layout);
+        } catch(e){ alert('Error creando plano: '+e.message); }
+    }
+
+    // Superficie implícita F(x,y,z)=0 usando isosurface
+    window.plotImplicit3D = function(){
+        const raw = currentExpression;
+        if (!raw) return alert('Escribe F(x,y,z)=0 o una expresión de F(x,y,z)');
+        let expr = normalize(raw);
+        if (expr.includes('=') && !expr.includes('==')){
+            const [L,R] = expr.split('=');
+            expr = `(${L})-(${R})`;
+        }
+        try{
+            const xmin = parseFloat(document.getElementById('xmin').value) || -5;
+            const xmax = parseFloat(document.getElementById('xmax').value) || 5;
+            const ymin = parseFloat(document.getElementById('ymin').value) || -5;
+            const ymax = parseFloat(document.getElementById('ymax').value) || 5;
+            const res = Math.max(12, Math.min(60, parseInt(document.getElementById('res3d').value) || 30));
+            const xs = linspace(xmin, xmax, res);
+            const ys = linspace(ymin, ymax, res);
+            const zs = linspace(xmin, xmax, res);
+
+            const X=[],Y=[],Z=[],VAL=[];
+            let vmin=Infinity, vmax=-Infinity;
+            for(let k=0;k<zs.length;k++){
+                const z = zs[k];
+                for(let j=0;j<ys.length;j++){
+                    const y = ys[j];
+                    for(let i=0;i<xs.length;i++){
+                        const x = xs[i];
+                        let fn = expr.replace(/x/g, `(${x})`).replace(/y/g, `(${y})`).replace(/z/g, `(${z})`);
+                        let v = null;
+                        try{ const r = eval(fn); if (typeof r==='number' && isFinite(r)) v=r; else v=null; }catch(err){ v=null; }
+                        X.push(x); Y.push(y); Z.push(z); VAL.push(v);
+                        if (typeof v==='number' && isFinite(v)){ if (v<vmin) vmin=v; if (v>vmax) vmax=v; }
+                    }
+                }
+            }
+
+            const data=[{type:'isosurface', x:X, y:Y, z:Z, value:VAL, isomin:vmin, isomax:vmax, isolevel:0, caps:{x:false,y:false,z:false}, colorscale:'Viridis', showscale:false, name:'F(x,y,z)=0'}];
+            const layout={title:'Superficie implícita (nivel 0)', scene:{xaxis:{title:'x'}, yaxis:{title:'y'}, zaxis:{title:'z'}}};
+            Plotly.newPlot('graph3d', data, layout);
+        }catch(e){ alert('Error graficando implícita: '+e.message); }
+    }
+
+    // Cuádricas rápidas
+    window.loadQuadric = function(type){
+        if (type==='sphere'){
+            const r = parseFloat(prompt('Radio de la esfera (R):', '3'));
+            if (!isFinite(r)) return;
+            currentExpression = `x**2 + y**2 + z**2 = ${r*r}`;
+            refreshDisplay();
+            plotImplicit3D();
+        } else if (type==='ellipsoid'){
+            const a = parseFloat(prompt('a:', '3')); const b=parseFloat(prompt('b:', '2')); const c=parseFloat(prompt('c:', '1'));
+            if (![a,b,c].every(v=>isFinite(v))) return;
+            currentExpression = `(x**2/${a*a}) + (y**2/${b*b}) + (z**2/${c*c}) = 1`;
+            refreshDisplay(); plotImplicit3D();
+        } else if (type==='paraboloid'){
+            const a = parseFloat(prompt('Coeficiente a (x^2/a^2):', '1'));
+            const b = parseFloat(prompt('Coeficiente b (y^2/b^2):', '1'));
+            if (![a,b].every(v=>isFinite(v))) return;
+            currentExpression = `(x**2/${a*a}) + (y**2/${b*b})`;
+            refreshDisplay(); plot3D();
+        } else if (type==='hyperboloid1'){
+            currentExpression = `(x**2) + (y**2) - (z**2) = 1`;
+            refreshDisplay(); plotImplicit3D();
+        } else if (type==='hyperboloid2'){
+            currentExpression = `(z**2) - (x**2) - (y**2) = 1`;
+            refreshDisplay(); plotImplicit3D();
+        }
+    }
+
+    // Optimización de f(x,y): gradiente, puntos críticos y clasificación
+    window.optimizeFn = async function(){
+        const raw = currentExpression;
+        let expr = raw.includes('=') ? raw.split('=')[1].trim() : raw;
+        expr = normalize(expr);
+        try{
+            const resp = await fetch('/optimize', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({func: expr})});
+            const data = await resp.json();
+            if (!data.success) throw new Error(data.error || 'Error desconocido');
+            const html = `
+                <div><b>Gradiente:</b> ${data.gradient_latex}</div>
+                <div><b>Hessiano:</b> ${data.hessian_latex}</div>
+                <div><b>Puntos críticos:</b> ${data.critical_points_latex.join('<br/>') || '—'}</div>
+                <div><b>Clasificación:</b> ${data.classification.join('<br/>') || '—'}</div>
+            `;
+            updateAnalysis(html);
+        }catch(e){ updateAnalysis('Error: '+e.message); }
+    }
+
     window.helpDialog = function() {
         alert(
 `Ayuda rápida:
@@ -432,6 +771,162 @@ LIMITACIÓN:
 - La funcionalidad de Derivadas (simbólicas) y simplificación NO está disponible.`
         );
     };
+
+    // -------- Modal de ejemplos --------
+    window.openExamples = function(){
+        const m = document.getElementById('examplesModal'); if (m) m.style.display='flex';
+    }
+    window.closeExamples = function(ev){
+        const m = document.getElementById('examplesModal'); if (m) m.style.display='none';
+    }
+
+    function setExprAndDisplay(expr){ currentExpression = expr; refreshDisplay(); }
+    // Acciones por tema
+    window.examplePlot3D = function(expr){ setExprAndDisplay('f(x,y) = ' + expr); closeExamples(); plot3D(); }
+    window.exampleDomainRange = function(expr){ setExprAndDisplay('f(x,y) = ' + expr); closeExamples(); analyzeDomainRange(); }
+    window.exampleLimit = function(expr,a,b){ setExprAndDisplay('f(x,y) = ' + expr); closeExamples(); computeLimit2DPreset(a,b); }
+    window.exampleDeriv = function(expr,a,b){ setExprAndDisplay('f(x,y) = ' + expr); closeExamples(); showDerivativesPreset(a,b); }
+    window.exampleLagrange = function(f,g){ setExprAndDisplay('f(x,y) = ' + f); closeExamples(); lagrangePreset(f,g); }
+    window.exampleInt2D = function(expr, bx, by){ setExprAndDisplay('f(x,y) = ' + expr); closeExamples(); integralDoublePreset(bx, by); }
+    window.exampleInt3D = function(expr, bx, by, bz){ setExprAndDisplay('f(x,y,z) = ' + expr); closeExamples(); integralTriplePreset(bx, by, bz); }
+
+    // Helpers para llamar endpoints sin prompts
+    window.computeLimit2DPreset = async function(a,b){
+        const raw = currentExpression; try{
+            const resp = await fetch('/limit2d', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({expression: raw, a, b})});
+            const data = await resp.json(); if(!data.success) throw new Error(data.error||'Error límite');
+            const val = data.limit_estimate==null ? 'No estimado' : data.limit_estimate;
+            updateAnalysis(`<div><b>Lim f(x,y)→(${a},${b}):</b> ${val}</div><div>Convergencia (4 rutas): ${data.converges?'Sí':'No'}</div>`);
+        }catch(e){ updateAnalysis('Error: '+e.message); }
+    }
+
+    window.showDerivativesPreset = async function(a,b){
+        const raw = currentExpression; try{
+            const resp = await fetch('/derivatives', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({expression: raw, point:{x:a, y:b}})});
+            const data = await resp.json(); if(!data.success) throw new Error(data.error||'Error derivadas');
+            let html = `<div><b>∂f/∂x:</b> ${data.fx_latex}</div><div><b>∂f/∂y:</b> ${data.fy_latex}</div><div><b>Hessiano:</b> ${data.hessian_latex}</div>`;
+            if (data.grad_at_point) html += `<div><b>∇f(${a},${b}):</b> (${data.grad_at_point[0]}, ${data.grad_at_point[1]})</div>`;
+            updateAnalysis(html);
+        }catch(e){ updateAnalysis('Error: '+e.message); }
+    }
+
+    window.lagrangePreset = async function(f,g){
+        try{
+            const resp = await fetch('/lagrange', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({f, g})});
+            const data = await resp.json(); if(!data.success) throw new Error(data.error||'Error Lagrange');
+            const pts = (data.points||[]).map(p=>`(${p.x}, ${p.y})`).join(', ') || '—';
+            updateAnalysis(`<div><b>f:</b> ${data.latex.f}</div><div><b>g:</b> ${data.latex.g}</div><div><b>Puntos candidatos:</b> ${pts}</div>`);
+        }catch(e){ updateAnalysis('Error: '+e.message); }
+    }
+
+    window.integralDoublePreset = async function(bx,by){
+        const raw = currentExpression; try{
+            const resp = await fetch('/integral2d', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({expression: raw, bounds:{x:bx, y:by}})});
+            const data = await resp.json(); if(!data.success) throw new Error(data.error||'Error integral 2D');
+            updateAnalysis(`<div><b>∬ f(x,y) dx dy:</b> ${data.result}</div><div>Simbolico:</div><div>${data.latex}</div>`);
+        }catch(e){ updateAnalysis('Error: '+e.message); }
+    }
+
+    window.integralTriplePreset = async function(bx,by,bz){
+        const raw = currentExpression; try{
+            const resp = await fetch('/integral3d', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({expression: raw, bounds:{x:bx, y:by, z:bz}})});
+            const data = await resp.json(); if(!data.success) throw new Error(data.error||'Error integral 3D');
+            updateAnalysis(`<div><b>∭ f(x,y,z) dV:</b> ${data.result}</div><div>Simbolico:</div><div>${data.latex}</div>`);
+        }catch(e){ updateAnalysis('Error: '+e.message); }
+    }
+
+    // ---- Nuevo: Dominio y Rango ----
+    window.analyzeDomainRange = async function(){
+        const raw = currentExpression; if (!raw) return alert('Ingrese f(x,y) o z = f(x,y)');
+        try{
+            const xmin = parseFloat(document.getElementById('xmin').value) || -5;
+            const xmax = parseFloat(document.getElementById('xmax').value) || 5;
+            const ymin = parseFloat(document.getElementById('ymin').value) || -5;
+            const ymax = parseFloat(document.getElementById('ymax').value) || 5;
+            const resp = await fetch('/domain_range', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({expression: raw, x_range:[xmin,xmax], y_range:[ymin,ymax], samples:70})});
+            const data = await resp.json();
+            if (!data.success) throw new Error(data.error || 'Error dominio/rango');
+            updateAnalysis(`<div><b>Dominio (puntos válidos en malla):</b> ${data.domain_points}</div>
+                <div><b>Rango aproximado:</b> [${data.range_min}, ${data.range_max}]</div>`);
+        }catch(e){ updateAnalysis('Error: '+e.message); }
+    }
+
+    // ---- Nuevo: Límite 2D ----
+    window.computeLimit2D = async function(){
+        const raw = currentExpression; if (!raw) return alert('Ingrese f(x,y)');
+        const ax = parseFloat(document.getElementById('limitAx').value);
+        const by = parseFloat(document.getElementById('limitBy').value);
+        if (![ax,by].every(v=>isFinite(v))) return updateAnalysis('Error: valores (a,b) inválidos');
+        try{
+            const resp = await fetch('/limit2d', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({expression: raw, a: ax, b: by})});
+            const data = await resp.json(); if (!data.success) throw new Error(data.error || 'Error límite');
+            const val = data.limit_estimate==null ? 'No estimado' : data.limit_estimate;
+            updateAnalysis(`<div><b>Lim f(x,y)→(${ax},${by}):</b> ${val}</div>
+                <div>Convergencia (4 rutas): ${data.converges ? 'Sí' : 'No'}</div>`);
+        }catch(e){ updateAnalysis('Error: '+e.message); }
+    }
+
+    // ---- Nuevo: Derivadas y Gradiente ----
+    window.showDerivatives = async function(){
+        const raw = currentExpression; if (!raw) return alert('Ingrese f(x,y)');
+        const dx = document.getElementById('derivX').value;
+        const dy = document.getElementById('derivY').value;
+        let point = null;
+        if (dx !== '' && dy !== ''){
+            const a = parseFloat(dx), b = parseFloat(dy);
+            if([a,b].every(v=>isFinite(v))) point = {x:a, y:b};
+        }
+        try{
+            const resp = await fetch('/derivatives', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({expression: raw, point})});
+            const data = await resp.json(); if(!data.success) throw new Error(data.error || 'Error derivadas');
+            let html = `<div><b>∂f/∂x:</b> ${data.fx_latex}</div><div><b>∂f/∂y:</b> ${data.fy_latex}</div><div><b>Hessiano:</b> ${data.hessian_latex}</div>`;
+            if (data.grad_at_point) html += `<div><b>∇f(${point?point.x:'a'},${point?point.y:'b'}):</b> (${data.grad_at_point[0]}, ${data.grad_at_point[1]})</div>`;
+            updateAnalysis(html);
+        }catch(e){ updateAnalysis('Error: '+e.message); }
+    }
+
+    // ---- Nuevo: Lagrange ----
+    window.lagrangeOptimize = async function(){
+        const raw = currentExpression; if (!raw) return alert('Ingrese f(x,y)');
+        const g = document.getElementById('lagrangeG').value || 'x + y = 1';
+        try{
+            const resp = await fetch('/lagrange', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({f: raw, g})});
+            const data = await resp.json(); if(!data.success) throw new Error(data.error || 'Error Lagrange');
+            const pts = (data.points||[]).map(p=>`(${p.x}, ${p.y})`).join(', ') || '—';
+            updateAnalysis(`<div><b>f:</b> ${data.latex.f}</div><div><b>g:</b> ${data.latex.g}</div><div><b>Puntos candidatos:</b> ${pts}</div>`);
+        }catch(e){ updateAnalysis('Error: '+e.message); }
+    }
+
+    // ---- Nuevo: Integrales ----
+    window.integralDouble = async function(){
+        const raw = currentExpression; if (!raw) return alert('Ingrese f(x,y)');
+        const a = parseFloat(document.getElementById('int2dxA').value);
+        const b = parseFloat(document.getElementById('int2dxB').value);
+        const c = parseFloat(document.getElementById('int2dyC').value);
+        const d = parseFloat(document.getElementById('int2dyD').value);
+        if(![a,b,c,d].every(v=>isFinite(v))) return updateAnalysis('Error: límites ∬ inválidos');
+        try{
+            const resp = await fetch('/integral2d', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({expression: raw, bounds:{x:[a,b], y:[c,d]}})});
+            const data = await resp.json(); if(!data.success) throw new Error(data.error || 'Error integral 2D');
+            updateAnalysis(`<div><b>∬ f(x,y) dx dy:</b> ${data.result}</div><div>Simbolico:</div><div>${data.latex}</div>`);
+        }catch(e){ updateAnalysis('Error: '+e.message); }
+    }
+
+    window.integralTriple = async function(){
+        const raw = currentExpression; if (!raw) return alert('Ingrese f(x,y,z)');
+        const a = parseFloat(document.getElementById('int3dxA').value);
+        const b = parseFloat(document.getElementById('int3dxB').value);
+        const c = parseFloat(document.getElementById('int3dyC').value);
+        const d = parseFloat(document.getElementById('int3dyD').value);
+        const e = parseFloat(document.getElementById('int3dzE').value);
+        const f = parseFloat(document.getElementById('int3dzF').value);
+        if(![a,b,c,d,e,f].every(v=>isFinite(v))) return updateAnalysis('Error: límites ∭ inválidos');
+        try{
+            const resp = await fetch('/integral3d', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({expression: raw, bounds:{x:[a,b], y:[c,d], z:[e,f]}})});
+            const data = await resp.json(); if(!data.success) throw new Error(data.error || 'Error integral 3D');
+            updateAnalysis(`<div><b>∭ f(x,y,z) dV:</b> ${data.result}</div><div>Simbolico:</div><div>${data.latex}</div>`);
+        }catch(e){ updateAnalysis('Error: '+e.message); }
+    }
 
 </script>
 </body>
