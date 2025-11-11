@@ -1,0 +1,61 @@
+Calculadora Multivariada — Dependencias y lógica del proyecto
+
+Resumen rápido
+- Backend en Python con Flask + SymPy + NumPy (algunos procesos usan SciPy/Matplotlib si se requieren utilidades auxiliares).
+- Frontend con HTML/CSS/JavaScript y Plotly.js para gráficas interactivas 2D/3D.
+- Plantillas en `templates/calculator.html` con controles para límites, derivadas/gradiente, Lagrange, integrales dobles/triples y análisis de dominio/rango.
+
+Dependencias (requirements.txt)
+- flask==2.3.3: servidor web y ruteo HTTP.
+- numpy==1.24.3: muestreo numérico, mallas y operaciones vectorizadas.
+- sympy==1.12: álgebra simbólica, derivadas, hessiano, integración y latex.
+- matplotlib==3.7.2: utilitarios gráficos/numéricos puntuales (no crítico en producción actual).
+- plotly==5.15.0: visualización (en backend opcional) y principalmente Plotly.js en frontend.
+- scipy==1.10.1: utilidades numéricas avanzadas; usada en módulos auxiliares si hace falta.
+
+Arquitectura y lógica (backend: app.py)
+- `GET /`: renderiza `templates/calculator.html`.
+- `POST /calculate`: limpia la expresión (`^`→`**`, `π`→`pi`, `√`→`sqrt`, etc.), elimina prefijos tipo `f(x)=` o `z=`, evalúa con SymPy y devuelve el resultado formateado.
+- `POST /domain_range`: aproxima dominio y rango de `f(x,y)` por muestreo:
+  - Convierte `f(x,y)` a función NumPy (`lambdify`).
+  - Muestra una cuadrícula (`meshgrid`) en rangos `x` e `y` y evalúa.
+  - Cuenta puntos válidos (finito/no NaN) y reporta min/max del rango.
+- `POST /limit2d`: estimación de límite en `(a,b)` por rutas múltiples:
+  - Evalúa secuencias `h→0` por varias trayectorias (x, y, diagonal, anti-diagonal).
+  - Promedia últimos valores y verifica dispersión para marcar “convergente”.
+- `POST /derivatives`: calcula parciales `∂f/∂x`, `∂f/∂y`, hessiano y, si se indica punto `(x,y)`, el valor del gradiente numérico en dicho punto.
+- `POST /lagrange`: resuelve sistema de multiplicadores de Lagrange para `f(x,y)` con restricción `g(x,y)=0` (normalizando `g=0` como `g(lhs)−g(rhs)`), entrega puntos candidatos y latex.
+- `POST /integral2d`: integra `f(x,y)` en límites rectangulares `{x:[a,b], y:[c,d]}` con `sympy.integrate`.
+- `POST /integral3d`: integra `f(x,y,z)` en límites `{x:[a,b], y:[c,d], z:[e,f]}` con `sympy.integrate`.
+
+Módulos auxiliares (carpeta `modules/`)
+- `gradient_analyzer.py`: usa SymPy para gradiente, hessiano, puntos críticos y clasificación básica.
+- `equation_solver.py`: parser/solución de ecuaciones y sistemas con SymPy; devuelve latex y soluciones.
+- `multivariable_integrals.py`: integrales dobles/triples y jacobiano para transformaciones.
+- `vector_calculus.py`: divergencia, rotacional y utilitarios de cálculo vectorial.
+- `visualization_engine.py`: utilitarios para construir superficies/figuras Plotly desde expresiones.
+
+Lógica (frontend: templates/calculator.html)
+- UI con paneles para: Límite, Derivadas/Gradiente, Lagrange, Integral doble, Integral triple, Dominio/Rango y Visualización.
+- Gráficas:
+  - 3D superficie con `Plotly` (colorscale Turbo, iluminación y contornos proyectados), cámara inicial ajustada.
+  - 2D con rejilla, línea cero y estilos mejorados.
+  - Botones nuevos: Contornos 2D, Heatmap 2D, Centrar cámara 3D, Exportar PNG.
+- Calidad de vida:
+  - Atajos Enter en campos clave (derivadas, integrales, límite, etc.).
+  - `ensureGraph2D/ensureGraph3D` para inicializar ejes vacíos.
+  - Visualizaciones auxiliares: marcador de límite (punto en 3D), flecha de gradiente en el punto, región de integración 2D (rectángulo), máscara de dominio 2D.
+- Modal de ejemplos ampliado: múltiples presets para cada sección (visualización, dominio/rango, límite, derivadas, Lagrange, integrales dobles/triples).
+
+Notas importantes
+- La evaluación simbólica se realiza en backend con SymPy; en frontend algunas evaluaciones puntuales (contornos/heatmap) se muestrean con JavaScript (`eval`) sobre la malla. Se han normalizado tokens, pero se recomienda prudencia con expresiones introducidas por el usuario.
+- Para expresiones tipo `f(x,y)=...` o `z=...`, el sistema toma la parte derecha para evaluar.
+- El análisis de dominio/rango es aproximado por muestreo; puede requerir aumentar `samples`/resolución para funciones complicadas.
+
+Cómo ejecutar
+- Activar entorno e instalar: `pip install -r requirements.txt`.
+- Ejecutar servidor: `python app.py` y abrir `http://127.0.0.1:5000/`.
+
+Qué hace el código (explicación breve)
+- Provee una calculadora multivariable que: evalúa expresiones, estima límites en puntos, calcula derivadas parciales/gradiente/Hessiano, resuelve problemas de Lagrange, integra funciones en 2D/3D y analiza dominio/rango de forma numérica.
+- Visualiza resultados en gráficos interactivos 2D/3D con herramientas de contorno, heatmap y exportación.

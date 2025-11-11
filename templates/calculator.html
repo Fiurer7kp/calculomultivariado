@@ -281,6 +281,10 @@
             <button class="function" onclick="examplePlot3D('x**2 + 2*y**2')">x^2 + 2*y^2</button>
             <button class="function" onclick="examplePlot3D('sin(x) * cos(y)')">sin(x)*cos(y)</button>
             <button class="function" onclick="examplePlot3D('sqrt(25 - x**2 - y**2)')">sqrt(25 - x^2 - y^2)</button>
+            <button class="function" onclick="examplePlot3D('x*y')">silla: x*y</button>
+            <button class="function" onclick="examplePlot3D('exp(-(x**2 + y**2))')">gaussiana: e^{-(x^2+y^2)}</button>
+            <button class="function" onclick="examplePlot3D('sin(x**2 + y**2)')">ondas: sin(x^2+y^2)</button>
+            <button class="function" onclick="examplePlot3D('x**2 - y**2')">hiperboloide: x^2 − y^2</button>
           </div>
         </div>
         <div class="examples-card">
@@ -289,6 +293,9 @@
             <button class="function" onclick="exampleDomainRange('sqrt(9 - x**2 - y**2)')">sqrt(9 - x^2 - y^2)</button>
             <button class="function" onclick="exampleDomainRange('log(x + y)')">log(x + y)</button>
             <button class="function" onclick="exampleDomainRange('1 / (x - y)')">1/(x - y)</button>
+            <button class="function" onclick="exampleDomainRange('sqrt(x) + log(y)')">sqrt(x) + log(y)</button>
+            <button class="function" onclick="exampleDomainRange('log(x**2 + y**2)')">log(x^2 + y^2)</button>
+            <button class="function" onclick="exampleDomainRange('1 / (x**2 + y**2 - 1)')">1/(x^2 + y^2 − 1)</button>
           </div>
         </div>
         <div class="examples-card">
@@ -297,6 +304,9 @@
             <button class="function" onclick="exampleLimit('(x**2*y) / (x**2 + y**2)',0,0)">(x^2*y)/(x^2+y^2)</button>
             <button class="function" onclick="exampleLimit('(x*y) / (x**2 + y**2)',0,0)">(x*y)/(x^2+y^2)</button>
             <button class="function" onclick="exampleLimit('sin(x*y)',0,0)">sin(x*y)</button>
+            <button class="function" onclick="exampleLimit('x**2 + y**2',0,0)">x^2 + y^2</button>
+            <button class="function" onclick="exampleLimit('(x**2 + y**2) * sin(1/(x**2 + y**2))',0,0)">(x^2+y^2)·sin(1/(x^2+y^2))</button>
+            <button class="function" onclick="exampleLimit('(x*y) / sqrt(x**2 + y**2)',0,0)">(x*y)/√(x^2+y^2)</button>
           </div>
         </div>
         <div class="examples-card">
@@ -305,6 +315,9 @@
             <button class="function" onclick="exampleDeriv('x**2 + y**2',1,-2)">x^2 + y^2 @ (1,-2)</button>
             <button class="function" onclick="exampleDeriv('x*y + x**2',0,3)">x*y + x^2 @ (0,3)</button>
             <button class="function" onclick="exampleDeriv('exp(x) * sin(y)',0,Math.PI/2)">e^x sin(y) @ (0,π/2)</button>
+            <button class="function" onclick="exampleDeriv('x**3 - 3*x*y**2',1,1)">x^3 − 3xy^2 @ (1,1)</button>
+            <button class="function" onclick="exampleDeriv('sin(x) + cos(y)',0,0)">sin(x) + cos(y) @ (0,0)</button>
+            <button class="function" onclick="exampleDeriv('x * exp(-(x**2 + y**2))',0,1)">x·e^{-(x^2+y^2)} @ (0,1)</button>
           </div>
         </div>
         <div class="examples-card">
@@ -313,6 +326,9 @@
             <button class="function" onclick="exampleLagrange('x**2 + y**2','x + y = 1')">x^2 + y^2; x+y=1</button>
             <button class="function" onclick="exampleLagrange('x**2 + 4*y**2','x - y = 0')">x^2 + 4y^2; x−y=0</button>
             <button class="function" onclick="exampleLagrange('-x - y','x**2 + y**2 = 1')">−x − y; x^2+y^2=1</button>
+            <button class="function" onclick="exampleLagrange('x*y','x + y = 10')">x·y; x+y=10</button>
+            <button class="function" onclick="exampleLagrange('x**2 + y**2','x - 2*y = 0')">x^2+y^2; x−2y=0</button>
+            <button class="function" onclick="exampleLagrange('x**2 + y**2','x**2 + y**2 = 9')">x^2+y^2; círculo r=3</button>
           </div>
         </div>
         <div class="examples-card">
@@ -321,9 +337,13 @@
             <button class="function" onclick="exampleInt2D('x + y',[0,1],[0,1])">∬(x+y) [0,1]x[0,1]</button>
             <button class="function" onclick="exampleInt2D('x**2 + y**2',[-1,1],[0,2])">∬(x^2+y^2) [-1,1]x[0,2]</button>
             <button class="function" onclick="exampleInt2D('sin(x) * cos(y)',[0,Math.PI],[0,Math.PI/2])">∬ sin(x)cos(y)</button>
+            <button class="function" onclick="exampleInt2D('exp(-(x**2 + y**2))',[-1,1],[-1,1])">∬ e^{-(x^2+y^2)} [-1,1]^2</button>
+            <button class="function" onclick="exampleInt2D('y * sin(x)',[0,Math.PI],[0,1])">∬ y·sin(x) [0,π]x[0,1]</button>
             <button class="function" onclick="exampleInt3D('1',[0,1],[0,1],[0,1])">∭(1) cubo unidad</button>
             <button class="function" onclick="exampleInt3D('x + y + z',[0,1],[0,1],[0,1])">∭(x+y+z) [0,1]^3</button>
             <button class="function" onclick="exampleInt3D('x**2 + y**2',[0,1],[0,1],[0,2])">∭(x^2+y^2) z∈[0,2]</button>
+            <button class="function" onclick="exampleInt3D('exp(-(x**2 + y**2 + z**2))',[-1,1],[-1,1],[-1,1])">∭ e^{-(x^2+y^2+z^2)} [-1,1]^3</button>
+            <button class="function" onclick="exampleInt3D('sin(x) * cos(y) * exp(-z)',[0,Math.PI],[0,Math.PI/2],[0,2])">∭ sin(x)cos(y)e^{-z}</button>
           </div>
         </div>
       </div>
