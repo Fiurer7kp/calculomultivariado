@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Calculadora Multivariada — GeoGebra Suite</title>
+
+    <!-- Librería que sí está cargando correctamente para cálculos y gráficos -->
+    <script src="https://cdn.plot.ly/plotly-2.26.2.min.js"></script>
+
+    <style>
+        * { box-sizing: border-box; margin:0; padding:0; font-family: Arial, sans-serif; }
+        body { background:#2c3e50; min-height:100vh; display:flex; justify-content:center; align-items:flex-start; padding:20px; }
+        .calculator { background:white; border-radius:10px; box-shadow:0 0 20px rgba(0,0,0,0.5); width:980px; max-width:98vw; }
+        .header { background:#34495e; color:white; padding:15px; text-align:center; border-radius:10px 10px 0 0; }
+        .content { display:grid; grid-template-columns: 1fr 340px; gap:12px; padding:15px; }
+        .graph-panel { background:#ecf0f1; padding:10px; border-radius:5px; }
+        #graph2d { width:100%; height:300px; background:white; border-radius:4px; }
+        #graph3d { width:100%; height:300px; background:white; border-radius:4px; margin-top:10px; }
+        .calc-panel { background:#bdc3c7; padding:10px; border-radius:5px; }
+        .display { background:#1a1a1a; color:#00ff00; font-size:16px; padding:10px; border-radius:5px; text-align:right; min-height:44px; font-family:'Courier New', monospace; overflow-x:auto; }
+        .small { font-size:12px; color:#222; margin-bottom:6px; text-align:center; }
+        .buttons { display:grid; grid-template-columns: repeat(5, 1fr); gap:6px; margin-top:8px; }
+        button { padding:10px 6px; font-size:14px; border:none; border-radius:6px; cursor:pointer; background:#ecf0f1; transition: background-color 0.2s; }
+        button:hover { filter: brightness(0.9); }
+        .number { background:#e9ecef; }
+        .operation { background:#3498db; color:white; }
+        .function { background:#e67e22; color:white; }
+        .equals { background:#2ecc71; color:white; grid-column: span 1; }
+        .clear { background:#e74c3c; color:white; }
+        .session-buttons { display:flex; gap:10px; justify-content:center; margin-top:10px; }
+        .session-btn { padding:8px 12px; border:none; border-radius:15px; font-weight:bold; cursor:pointer; }
+        .assign { background:#3498db; color:white; }
+        .login { background:#2ecc71; color:white; }
+        .help { font-size:12px; margin-top:8px; color:#222; }
+        .controls { margin-top:8px; display:flex; gap:8px; align-items:center; justify-content:space-between; flex-wrap: wrap;}
+        .range-inputs { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+        input[type="text"], input[type="number"], select { padding:6px; border-radius:6px; border:1px solid #999; }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <div class="header">
+            <h2>GeoGebra Suite — Calculadora Multivariada</h2>
+            <p>Evaluación numérica + gráficos 2D y 3D (Implementación con Plotly)</p>
+        </div>
+
+        <div class="content">
+            <div class="graph-panel">
+                <h4>Gráfica 2D (y = f(x))</h4>
+                <div id="graph2d"></div>
+
+                <h4 style="margin-top:10px">Gráfica 3D (z = f(x,y))</h4>
+                <div id="graph3d"></div>
+            </div>
+
+            <div class="calc-panel">
+                <div class="display" id="display">0</div>
+                <div class="small">Expr: usa x, y, z. Ej: sin(x) + x^2  — Asignaciones: a=3  — ¡ADVERTENCIA! No soporta derivadas o simplificación simbólica.</div>
+
+                <div class="buttons">
+                    <!-- fila 1 -->
+                    <button class="function" onclick="addToDisplay('x')">x</button>
+                    <button class="function" onclick="addToDisplay('y')">y</button>
+                    <button class="function" onclick="addToDisplay('z')">z</button>
+                    <button class="function" onclick="addToDisplay('Math.PI')">π</button>
+                    <button class="function" onclick="addToDisplay('Math.E')">e</button>
+
+                    <!-- fila 2 -->
+                    <button class="function" onclick="addToDisplay('Math.sin(')">sin</button>
+                    <button class="function" onclick="addToDisplay('Math.cos(')">cos</button>
+                    <button class="function" onclick="addToDisplay('Math.tan(')">tan</button>
+                    <button class="function" onclick="addToDisplay('Math.log(')">ln</button>
+                    <button class="function" onclick="addToDisplay('Math.sqrt(')">√</button>
+
+                    <!-- fila 3 -->
+                    <button class="number" onclick="addToDisplay('7')">7</button>
+                    <button class="number" onclick="addToDisplay('8')">8</button>
+                    <button class="number" onclick="addToDisplay('9')">9</button>
+                    <button class="operation" onclick="addToDisplay('/')">÷</button>
+                    <button class="operation" onclick="addToDisplay('*')">×</button>
+
+                    <!-- fila 4 -->
+                    <button class="number" onclick="addToDisplay('4')">4</button>
+                    <button class="number" onclick="addToDisplay('5')">5</button>
+                    <button class="number" onclick="addToDisplay('6')">6</button>
+                    <button class="operation" onclick="addToDisplay('-')">−</button>
+                    <button class="operation" onclick="addToDisplay('+')">+</button>
+
+                    <!-- fila 5 -->
+                    <button class="number" onclick="addToDisplay('1')">1</button>
+                    <button class="number" onclick="addToDisplay('2')">2</button>
+                    <button class="number" onclick="addToDisplay('3')">3</button>
+                    <button class="function" onclick="addToDisplay('**')">^</button>
+                    <button class="function" onclick="addToDisplay('(')">(</button>
+
+                    <!-- fila 6 -->
+                    <button class="function" onclick="addToDisplay(')')">)</button>
+                    <button class="function" onclick="addToDisplay(',')">,</button>
+                    <button class="number" onclick="addToDisplay('.')">.</button>
+                    <button class="function" onclick="useAns()">ans</button>
+                    <button class="clear" onclick="clearDisplay()">C</button>
+
+                    <!-- fila 7 -->
+                    <button class="operation" onclick="backspace()">⌫</button>
+                    <button class="function" onclick="assignVariable()">ASIG</button>
+                    <button class="function" onclick="alert('Funcionalidad simbólica (derivadas) no disponible sin math.js')">∂/∂x</button>
+                    <button class="function" onclick="alert('Funcionalidad simbólica (derivadas) no disponible sin math.js')">∂/∂y</button>
+                    <button class="equals" onclick="calculate()">=</button>
+
+                    <!-- fila 8 -->
+                    <button class="function" onclick="plot2D()">Graficar 2D</button>
+                    <button class="function" onclick="plot3D()">Graficar 3D</button>
+                    <button class="function" onclick="clearGraphs()">Limpiar gráficas</button>
+                    <button class="login" onclick="toggleLogin()">ABRIR SESIÓN</button>
+                    <button class="function" onclick="helpDialog()">Ayuda</button>
+                </div>
+
+                <div class="controls">
+                    <div class="range-inputs">
+                        <label> x ∈ <input id="xmin" type="number" value="-5" style="width:70px"/> : <input id="xmax" type="number" value="5" style="width:70px"/></label>
+                        <label> y ∈ <input id="ymin" type="number" value="-5" style="width:70px"/> : <input id="ymax" type="number" value="5" style="width:70px"/></label>
+                    </div>
+                    <div>
+                        <label>Resolución 3D: <input id="res3d" type="number" value="40" min="10" max="150" style="width:70px"/></label>
+                    </div>
+                </div>
+
+                <div class="session-buttons">
+                    <button class="session-btn assign" onclick="openAssignModal()">Variables</button>
+                    <button class="session-btn login" onclick="toggleLogin()">ABRIR SESIÓN</button>
+                </div>
+
+                <div class="help" id="helptext">
+                    Consejos: Para gráficos 2D, usa 'x' (ej: Math.sin(x)). Para 3D usa 'x' e 'y' (ej: x**2 + y**2).
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+/*
+  Calculadora Multivariada (Revisión 3):
+  - Se eliminó la dependencia de math.js y function-plot.
+  - Se usa JavaScript nativo (eval) y Plotly para garantizar que no haya fallas de carga de CDN.
+  - ADVERTENCIA: La funcionalidad simbólica (derivadas, simplificación) no está disponible.
+*/
+
+    let displayEl;
+    let currentExpression = '0';
+    let lastResult = null;
+    const scope = {}; // variables asignadas
+
+    // Inicialización inmediata
+    document.addEventListener('DOMContentLoaded', () => {
+        displayEl = document.getElementById('display');
+        refreshDisplay();
+    });
+
+    // Helper: mostrar en display
+    function refreshDisplay() {
+        if (displayEl) {
+            displayEl.textContent = currentExpression;
+        }
+    }
+
+    // Normalizar expresión (simplificación de sintaxis de usuario a JS nativo)
+    function normalize(expr) {
+        let text = expr.replace(/×/g, '*').replace(/÷/g, '/');
+        // Reemplazar ^ por ** (potencia en JS)
+        text = text.replace(/\^/g, '**'); 
+        // Reemplazar ans por lastResult
+        if (lastResult !== null) {
+            text = text.replace(/ans/gi, lastResult);
+        }
+        // Reemplazar variables del scope (ej: a, b) por sus valores
+        for (const key in scope) {
+            const regex = new RegExp(`\\b${key}\\b`, 'g');
+            text = text.replace(regex, scope[key]);
+        }
+        return text;
+    }
+
+    // --- FUNCIONES DE CALCULADORA ---
+
+    window.addToDisplay = function(value) {
+        if (currentExpression === '0' || currentExpression.includes('Error')) {
+            currentExpression = value;
+        } else {
+            currentExpression += value;
+        }
+        refreshDisplay();
+    };
+
+    window.clearDisplay = function() {
+        currentExpression = '0';
+        refreshDisplay();
+    };
+
+    window.backspace = function() {
+        if (currentExpression.length > 1) {
+            currentExpression = currentExpression.slice(0, -1);
+        } else {
+            currentExpression = '0';
+        }
+        refreshDisplay();
+    };
+
+    window.useAns = function() {
+        if (lastResult !== null) {
+            addToDisplay('ans');
+        }
+    };
+
+    // Asignar variable simple (numérica)
+    window.assignVariable = function() {
+        const expr = prompt('Escriba asignación (ej: a = 3, b = 2*5)', '');
+        if (!expr) return;
+        
+        try {
+            const text = normalize(expr);
+            if (text.includes('=')) {
+                const [left, right] = text.split('=').map(s => s.trim());
+                if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(left)) {
+                    alert('Nombre de variable inválido');
+                    return;
+                }
+                // Usar eval para calcular el valor (solo numérico)
+                const value = eval(right);
+                if (typeof value === 'number' && isFinite(value)) {
+                    scope[left] = value;
+                    alert(`Asignado: ${left} = ${value}`);
+                } else {
+                    alert('El valor asignado no es un número válido.');
+                }
+            } else {
+                alert('Use el formato nombre = expresión');
+            }
+        } catch (e) {
+            alert('Error en asignación: ' + e.message);
+        }
+    };
+
+    window.openAssignModal = window.assignVariable; // alias
+
+    window.toggleLogin = function() {
+        const btns = document.querySelectorAll('.login');
+        btns.forEach(btn => {
+            if (btn.textContent.trim() === 'ABRIR SESIÓN') {
+                btn.textContent = 'CERRAR SESIÓN';
+                btn.style.background = '#e74c3c';
+            } else {
+                btn.textContent = 'ABRIR SESIÓN';
+                btn.style.background = '#2ecc71';
+            }
+        });
+    };
+
+    // Evaluar expresión (Solo numérica)
+    window.calculate = function() {
+        const raw = currentExpression;
+        if (!raw || raw.trim() === '0') return;
+
+        try {
+            let expr = normalize(raw);
+            
+            // Si es una asignación simple
+            if (raw.includes('=') && !raw.includes('==')) {
+                const [left, right] = raw.split('=').map(s => s.trim());
+                if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(left)) {
+                    // Si es una asignación, solo se evalúa la parte derecha y se guarda en scope
+                    const value = eval(normalize(right));
+                    if (typeof value === 'number' && isFinite(value)) {
+                        scope[left] = value;
+                        lastResult = value;
+                        currentExpression = String(value);
+                        refreshDisplay();
+                        return;
+                    } else {
+                         throw new Error('Resultado no numérico');
+                    }
+                }
+            }
+
+            // Evaluación normal
+            const result = eval(expr);
+            
+            if (typeof result === 'number' && isFinite(result)) {
+                lastResult = result;
+                currentExpression = String(result);
+            } else {
+                throw new Error('Resultado no numérico o inválido');
+            }
+
+        } catch (err) {
+            console.error("Error de evaluación:", err);
+            currentExpression = 'Error: Sintaxis/Numérico';
+        }
+        refreshDisplay();
+    };
+
+    // Limpia gráficas
+    window.clearGraphs = function() {
+        document.getElementById('graph2d').innerHTML = '';
+        document.getElementById('graph3d').innerHTML = '';
+    };
+
+
+    // Graficar 2D: Usa Plotly para crear una línea de 1D (x, f(x))
+    window.plot2D = function() {
+        const raw = currentExpression;
+        if (!raw) return alert('Ingrese una expresión en x (ej: x**2)');
+        let expr = raw.includes('=') ? raw.split('=')[1].trim() : raw;
+        
+        try {
+            const xmin = parseFloat(document.getElementById('xmin').value) || -5;
+            const xmax = parseFloat(document.getElementById('xmax').value) || 5;
+            const res = 200; // Resolución para 2D
+
+            const xs = linspace(xmin, xmax, res);
+            const ys = [];
+
+            for (let i = 0; i < xs.length; i++) {
+                const x = xs[i];
+                let fn = normalize(expr); // Reemplazar ans, variables
+                fn = fn.replace(/x/g, `(${x})`); // Insertar valor de x
+                
+                let y = NaN;
+                try {
+                    const result = eval(fn);
+                    if (isFinite(result)) y = result;
+                } catch (e) {
+                    /* Mantener NaN */
+                }
+                ys.push(y);
+            }
+
+            const data = [{
+                x: xs,
+                y: ys,
+                mode: 'lines',
+                name: 'y = f(x)'
+            }];
+
+            const layout = {
+                title: `f(x) = ${expr}`,
+                xaxis: { title: 'x', range: [xmin, xmax] },
+                yaxis: { title: 'y', range: [parseFloat(document.getElementById('ymin').value) || -5, parseFloat(document.getElementById('ymax').value) || 5] },
+                margin: { l: 40, r: 10, b: 40, t: 30 },
+                responsive: true
+            };
+
+            Plotly.newPlot('graph2d', data, layout);
+        } catch (e) {
+            alert('Error al graficar 2D: ' + e.message);
+            console.error(e);
+        }
+    };
+
+    // Graficar 3D: usa Plotly para construir una malla z=f(x,y)
+    window.plot3D = function() {
+        const raw = currentExpression;
+        if (!raw) return alert('Ingrese una expresión en x,y (ej: x**2 - y**2) o z = ...');
+        let expr = raw.includes('=') ? raw.split('=')[1].trim() : raw;
+        
+        try {
+            const xmin = parseFloat(document.getElementById('xmin').value) || -5;
+            const xmax = parseFloat(document.getElementById('xmax').value) || 5;
+            const ymin = parseFloat(document.getElementById('ymin').value) || -5;
+            const ymax = parseFloat(document.getElementById('ymax').value) || 5;
+            const res = Math.max(10, Math.min(150, parseInt(document.getElementById('res3d').value) || 40));
+
+            const xs = linspace(xmin, xmax, res);
+            const ys = linspace(ymin, ymax, res);
+            const Z = [];
+
+            for (let j = 0; j < ys.length; j++) {
+                const y = ys[j];
+                const row = [];
+                for (let i = 0; i < xs.length; i++) {
+                    const x = xs[i];
+                    
+                    let fn = normalize(expr);
+                    // Reemplazar x e y en la expresión para la evaluación
+                    fn = fn.replace(/x/g, `(${x})`).replace(/y/g, `(${y})`);
+
+                    let v = NaN;
+                    try {
+                        const result = eval(fn);
+                        if (typeof result === 'number' && isFinite(result)) v = result;
+                    } catch (errEval) { /* Mantener NaN */ }
+                    row.push(v);
+                }
+                Z.push(row);
+            }
+
+            const data = [{ 
+                z: Z, x: xs, y: ys, type: 'surface',
+                name: `z = ${expr}`
+            }];
+
+            const layout = {
+                title: `f(x,y) = ${expr}`,
+                autosize: true, margin: {l: 40, r: 40, b: 40, t: 40},
+                scene: { xaxis: {title: 'x'}, yaxis: {title: 'y'}, zaxis: {title: 'z'} }
+            };
+
+            Plotly.newPlot('graph3d', data, layout, {responsive:true});
+        } catch (e) {
+            console.error(e);
+            alert('Error al graficar 3D: ' + e.message);
+        }
+    };
+
+    function linspace(a, b, n) {
+        const arr = [];
+        if (n === 1) return [(a + b)/2];
+        const step = (b - a) / (n - 1);
+        for (let i = 0; i < n; i++) arr.push(a + step * i);
+        return arr;
+    }
+
+    window.helpDialog = function() {
+        alert(
+`Ayuda rápida:
+- Evaluar: escribe la expresión y pulsa '='.
+- Asignar variable: usa "a = 3" o pulsa "ASIG".
+- Graficar 2D: la función debe depender de 'x' (ej: Math.sin(x)).
+- Graficar 3D: la expresión debe usar 'x', 'y' (ej: x**2 + y**2).
+- Notación: Usa '**' para potencias (ej: x**2). Usa 'Math.' antes de funciones trigonométricas (ej: Math.sin()).
+LIMITACIÓN:
+- La funcionalidad de Derivadas (simbólicas) y simplificación NO está disponible.`
+        );
+    };
+
+</script>
+</body>
+</html>
