@@ -16,8 +16,10 @@
         .content { display:grid; grid-template-columns: 1fr 340px; gap:12px; padding:15px; }
         .graph-panel { background:#ecf0f1; padding:10px; border-radius:5px; }
         :root{ --accent:#2d6cdf; --bg:#f7f8fa; --border:#e5e7eb; }
-        #graph2d { width:100%; height:520px; min-height:420px; background:white; border-radius:10px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-        #graph3d { width:100%; height:520px; min-height:420px; background:white; border-radius:10px; margin-top:12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    html, body { height:100%; margin:0; }
+    /* Gráficas ocupando la mayor parte de la pantalla */
+    #graph2d { width:100vw; height:78vh; min-height:480px; background:white; border-radius:10px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    #graph3d { width:100vw; height:78vh; min-height:480px; background:white; border-radius:10px; margin-top:12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
         .calc-panel { background:#bdc3c7; padding:10px; border-radius:5px; max-height: 680px; overflow-y: auto; }
         .display { background:#1a1a1a; color:#00ff00; font-size:16px; padding:10px; border-radius:5px; text-align:right; min-height:44px; font-family:'Courier New', monospace; overflow-x:auto; }
         .small { font-size:12px; color:#222; margin-bottom:6px; text-align:center; }
@@ -205,7 +207,8 @@
                         <button class="function" onclick="drawContours2D()">Contornos 2D</button>
                         <button class="function" onclick="drawHeatmap2D()">Heatmap 2D</button>
                         <button class="function" onclick="centerCamera3D()">Centrar cámara 3D</button>
-                        <button class="function" onclick="exportGraphs()">Exportar PNG</button>
+    <button class="function" onclick="exportGraphs()">Exportar PNG</button>
+    <button class="function" onclick="toggleFullscreen()">Pantalla completa</button>
                         <button class="function" onclick="drawGrowthField2D()">Crecimiento 2D (∇f)</button>
                         <button class="function" onclick="drawGrowthArrows3D()">Flechas crecimiento 3D</button>
                       </div>
@@ -771,6 +774,23 @@
         }catch(_){}
     }
 
+    // Pantalla completa para aprovechar todo el espacio
+    function toggleFullscreen(){
+        const d = document.documentElement;
+        if(!document.fullscreenElement){
+            if(d.requestFullscreen) d.requestFullscreen();
+        } else {
+            if(document.exitFullscreen) document.exitFullscreen();
+        }
+        setTimeout(resizePlots, 200);
+    }
+
+    function resizePlots(){
+        try{ const g2 = document.getElementById('graph2d'); if(g2) Plotly.Plots.resize(g2); }catch(_){}
+        try{ const g3 = document.getElementById('graph3d'); if(g3) Plotly.Plots.resize(g3); }catch(_){}
+    }
+    window.addEventListener('resize', resizePlots);
+
     // ---- Crecimiento 2D: campo de gradiente aproximado (flechas) ----
     function drawGrowthField2D(){
         const raw = currentExpression; if (!raw) return alert('Ingrese f(x,y)');
@@ -807,6 +827,7 @@
         }
         const trace = { x: segmentsX, y: segmentsY, mode:'lines', line:{color:'#27ae60', width:2}, name:'Crecimiento 2D (∇f)'};
         Plotly.addTraces('graph2d', [trace]);
+        resizePlots();
     }
 
     // ---- Crecimiento 3D: conos de gradiente sobre la superficie ----
@@ -840,6 +861,7 @@
         const sizeref = maxmag ? (2*maxmag) : 1;
         const cones = {type:'cone', x:X, y:Y, z:Z, u:U, v:V, w:W, anchor:'tail', colorscale:'YlGn', showscale:false, sizemode:'scaled', sizeref:sizeref, name:'Crecimiento 3D (∇f)'};
         Plotly.addTraces('graph3d', [cones]);
+        resizePlots();
     }
 
     function linspace(a, b, n) {
